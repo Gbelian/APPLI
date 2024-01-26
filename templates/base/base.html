@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha384-mQ93GR66B00ZXjt0YO5KlohRA5SY2XofGJl3waGLeAgFq1eb9TO5Umi2I6S5Dmi" crossorigin="anonymous">
+    <!-- Dans le bloc head de votre HTML -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <title>Dashboard</title>
+
+</head>
+    <body>
+        <div class="container">
+            <!--     SIDE AREA -->
+                <div class="sideArea">
+                    <div class="avatar">
+                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCNOdyoIXDDBztO_GC8MFLmG_p6lZ2lTDh1ZnxSDawl1TZY_Zw" alt="">
+                        <div class="avatarName">Welcome,<br>John Doe</div>
+                    </div>
+                    <ul class="sideMenu">
+                        <li><a href="{{ url_for('entreprise_graph') }}"><span class="fa fa-user-o"></span>Entreprises</a></li>
+                        <li><a href="{{ url_for('particular_graph') }}"><span class="fa fa-envelope-o"></span>Particulier</a></li>
+                        <li><a href="javascript:void(0)" class="has-submenu"><span class="fa fa-table"></span>EXTRACTION</a>
+                            <ul class="submenu">
+                                <li><a href="{{ url_for('extraction_entreprise') }}"><span class="fa fa-list">Entreprises</span></a></li>
+                                <li><a href="{{ url_for('extraction_particular') }}"><span class="fa fa-list">Particulier</span></a></li>
+                            </ul>
+                        </li>
+                        <li><a href="{{ url_for('parametre') }}"><span class="fa fa-user-o"></span>Parametre</a></li>
+                        <li><a href="{{ url_for('contact') }}"><span class="fa fa-envelope-o"></span>Contact</a></li>
+                    </ul>
+                </div>
+            <!--     SIDE AREA -->
+                <div class="mainArea">
+                    <!-- BEGIN NAV -->
+                    <nav class="navTop row">
+                        <div class="menuIcon fl"><span class="fa fa-bars"></span></div>
+                        <div class="account fr">
+                            <div class="name has-submenu">John Doe<span class="fa fa-angle-down"></span></div>
+                            <ul class="accountLinks submenu">
+                                <li><a href="{{ url_for('profil') }}">Profil</a></li>
+                                <li><a href="{{ url_for('logout') }}">Log out<span class="fa fa-sign-out fr"></span></a></li>
+                            </ul>
+                        </div>
+                    </nav>
+                    <!-- END NAV -->
+                    <!-- CONTAINER  -->
+                    <div class="mainContent">  
+            <!-- LIST FORM -->
+
+
+            
+            {% block content %} {% endblock %}
+
+
+                      
+            <!-- CATE LIST    -->
+  
+                    </div>
+                    <!-- END CONTAINER  -->
+                </div>
+            </div>  
+
+            
+            
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

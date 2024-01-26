@@ -1,0 +1,71 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<!-- DETAIL FORM -->
+<form action="" method="POST" enctype="multipart/form-data" class="form">
+    <div class="formHeader row">
+        <h2 class="text-1 fl">Product Detail</h2>
+        <div class="fr">
+            <button type="submit" class="btnSave bg-1 text-fff text-bold fr">SAVE</button><a href="" class="btnAdd fa fa-plus bg-1 text-fff"></a>
+        </div>
+    </div>
+    <div class="formBody row">
+        <div class="column s-6">
+            <label class="inputGroup">
+                <span>Nom</span>
+                <span><input type="text" name="name"></span>
+            </label>
+            <label class="inputGroup">
+                <span>Secteur</span>
+                <span><input type="text" name="code"></span>
+            </label>
+            <label class="inputGroup">
+                <span>Price</span>
+                <span><input type="text" name="price"></span>
+            </label>
+            <label class="inputGroup">
+                <span>Note</span>
+                <span><input type="text" name="note"></span>
+            </label>
+        </div>
+        <div class="column s-6">
+            <label class="inputGroup">
+                <span>Category</span>
+                <span>
+                    <select name="cate">
+                        <option value="cate01">Category01</option>
+                        <option value="cate02">Category02</option>
+                    </select>
+                    <i class="btnNewInput fa fa-plus bg-1 text-fff"></i>
+                </span>
+            </label>
+            <label class="inputGroup">
+                <span>Category</span>
+                <span>
+                    <select name="cate">
+                        <option value="cate01">Category01</option>
+                        <option value="cate02">Category02</option>
+                    </select>
+                    <i class="btnNewInput fa fa-plus bg-1 text-fff"></i>
+                </span>
+            </label>
+            <label class="inputGroup">
+                <span>Category</span>
+                <span>
+                    <select name="cate">
+                        <option value="cate01">Category01</option>
+                        <option value="cate02">Category02</option>
+                    </select>
+                    <i class="btnNewInput fa fa-plus bg-1 text-fff"></i>
+                </span>
+            </label>
+        </div>
+      <div class="column">
+          <label class="inputGroup">
+              <span>Description</span>
+              <textarea name="description"></textarea>
+          </label>
+      </div>
+    </div>
+</form> 
+{% endblock %}

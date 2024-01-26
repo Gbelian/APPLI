@@ -1,0 +1,67 @@
+
+
+/* Style des valeurs dans les petits articles */
+.petit-article p {
+  font-size: 1.5rem;
+  color: #555; /* Couleur du texte */
+}
+
+/* Style des valeurs dans les grands articles */
+.grand-article p {
+  font-size: 2rem;
+  color: #555; /* Couleur du texte */
+}
+
+/* Effet de survol pour les valeurs */
+.petit-article p:hover,
+.grand-article p:hover {
+  color: #6755cc; /* Couleur du texte en survol */
+}
+
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+/* Style des petits articles */
+.petit-article {
+  flex: 1 0 calc(10% - 20px); /* Réglez la largeur selon les besoins */
+  background-color: #f1f1f1;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Ajustements pour les écrans de taille inférieure à 768px */
+@media (max-width: 768px) {
+  .petit-article {
+    flex-basis: calc(100% - 20px);
+  }
+}
+
+/* Style des grands articles */
+.grand-article {
+  flex: 1 0 calc(45% - 20px); /* Réglez la largeur selon les besoins */
+  background-color: #f1f1f1;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Ajustements pour les écrans de taille inférieure à 768px */
+@media (max-width: 768px) {
+  .grand-article {
+    flex-basis: calc(100% - 20px);
+  }
+}
+
+/* Effet de survol */
+.petit-article:hover,
+.grand-article:hover {
+  transform: scale(1.05);
+}

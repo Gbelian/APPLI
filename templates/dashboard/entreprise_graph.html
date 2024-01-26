@@ -1,0 +1,339 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stylege.css') }}">
+<script src="{{ url_for('static', filename='js/scriptge.js') }}"></script>
+
+<div class="row filterGroup">
+    <form action="{{ url_for('entreprise_graph') }}" method="POST" class="formSearch fl">
+        <input type="text" class="inputSearch" name="search" placeholder="Search">
+        <button type="submit" class=""><i class="fa-solid fa-magnifying-glass"></i></button>
+    </form>
+
+    <div class="areaFilter fr row">
+
+        <div class="boxSelect fr">
+            <div class="titleSelect">Sort by</div>
+            <ul class="optionSelect">
+                <li><a href="{{ url_for('entreprise_graph', sort_by='alphabet') }}">Alphabet</a></li>
+                <li><a href="{{ url_for('entreprise_graph', sort_by='chiffre_affaire_asc') }}">Chiffre d'affaire, Ascending</a></li>
+                <li><a href="{{ url_for('entreprise_graph', sort_by='chiffre_affaire_desc') }}">Chiffre d'affaire, Descending</a></li>
+                <li><a href="{{ url_for('entreprise_graph', sort_by='latest') }}">Latest</a></li>
+            </ul>
+        </div>
+        <!-- FILTER -->
+      
+        <div class="btnFilter fr bg-fff"><span class="fa fa-filter"></span>Filter</div>
+        <div class="boxFilter">
+            <div class="btnFilter"><span class="fa fa-close"></span>Close</div>
+            <!-- GROUP -->
+            <form action="{{ url_for('entreprise_graph') }}" method="post">
+            <div class="groupInput">
+                <select name="secteur_activite">
+                    <option value="">Secteur</option>
+                    <!-- Dynamiquement charger les options depuis la base de données -->
+                    {% for secteur in secteurs_activite_uniques %}
+                        <option value="{{ secteur }}">{{ secteur }}</option>
+                    {% endfor %}
+                </select> 
+                <select name="ville">
+                    <option value="">Ville</option>
+                    <!-- Dynamiquement charger les options depuis la base de données -->
+                    {% for ville in villes_uniques %}
+                        <option value="{{ ville }}">{{ ville }}</option>
+                    {% endfor %}
+                </select>
+                <select name="type">
+                    <option value="">Type</option>
+                    <!-- Dynamiquement charger les options depuis la base de données -->
+                    {% for type_contact in types_contacts_uniques %}
+                        <option value="{{ type_contact }}">{{ type_contact }}</option>
+                    {% endfor %}
+                </select>
+                <select name="departement">
+                    <option value="">Departement</option>
+                    <!-- Dynamiquement charger les options depuis la base de données -->
+                    {% for departement in departements_uniques %}
+                        <option value="{{ departement }}">{{ departement }}</option>
+                    {% endfor %}
+                </select>
+                <select name="commune">
+                    <option value="">Commune</option>
+                    <!-- Dynamiquement charger les options depuis la base de données -->
+                    {% for commune in communes_uniques %}
+                        <option value="{{ commune }}">{{ commune }}</option>
+                    {% endfor %}
+                </select>
+                <select name="localite">
+                    <option value="">Localite</option>
+                    <!-- Dynamiquement charger les options depuis la base de données -->
+                    {% for localite in localites_uniques %}
+                        <option value="{{ localite }}">{{ localite }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class=""><i class="fa fa-search"></i></button>
+            </div>
+          </form>            
+        </div>
+    </div>
+</div>
+
+<section class="grid">
+  <!-- 6 petits articles pour afficher les constantes -->
+  <article class="petit-article">
+    <h1>Nombre d'entreprises</h1>
+    {{ total_entreprises }}
+  </article>
+  <article class="petit-article">
+    {{ total_contacts }}
+  </article>
+  <article class="petit-article">
+    {{ total_contacts_mail }}
+  </article>
+  <article class="petit-article">
+    {{ total_sites_web }}
+  </article>
+  <article class="petit-article">
+    {{ total_villes }}
+  </article>
+  <article class="petit-article">
+    {{ derniere_date_mise_a_jour }}
+  </article>
+
+  <!-- 7 grands articles pour les graphiques -->
+  <article class="grand-article">
+    <canvas id="myChart" ></canvas>
+  </article>
+  <article class="grand-article">
+    <canvas id="entrepriseVilleChart" ></canvas>
+  </article>
+  <article class="grand-article">
+    <canvas id="entrepriseSecteurChart" ></canvas>
+  </article>
+  <article class="grand-article">
+    <canvas id="evolutionChart"></canvas>
+  </article>
+</section>
+
+
+<script>
+  var ctx = document.getElementById('myChart').getContext('2d');
+  var myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: {{ types|tojson|safe }},
+      datasets: [{
+        label: 'Effectif de chaque type de contact',
+        data: {{ counts|tojson|safe }},
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(255, 205, 86, 0.8)',
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(153, 102, 255, 0.8)',
+        ],
+        borderWidth: 1,
+        borderColor: 'rgba(0, 0, 0, 0.1)',
+        hoverBackgroundColor: [
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(255, 205, 86, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(153, 102, 255, 1)',
+        ],
+        hoverBorderColor: 'rgba(0, 0, 0, 0.3)',
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Effectif',
+            font: {
+              size: 14,
+              weight: 'bold',
+            }
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Types de Contacts',
+            font: {
+              size: 14,
+              weight: 'bold',
+            }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            font: {
+              family: 'Arial',
+              size: 12,
+            }
+          }
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 1000,
+        easing: 'easeInOutQuart',
+      },
+    }
+  });
+
+  var ctx = document.getElementById('entrepriseVilleChart').getContext('2d');
+  var entrepriseVilleChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ villes|tojson|safe }},
+      datasets: [{
+        data: {{ entreprises_par_ville_counts|tojson|safe }},
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(255, 205, 86, 0.8)',
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(153, 102, 255, 0.8)',
+        ],
+        hoverBackgroundColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 205, 86, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(153, 102, 255, 1)',
+        ],
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'right',
+        }
+      }
+    }
+  });
+
+
+  var ctx = document.getElementById('entrepriseSecteurChart').getContext('2d');
+  var entrepriseSecteurChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: {{ secteurs_activite|tojson|safe }},
+      datasets: [{
+        data: {{ entreprises_par_secteur_counts|tojson|safe }},
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(255, 205, 86, 0.8)',
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(153, 102, 255, 0.8)',
+        ],
+        hoverBackgroundColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 205, 86, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(153, 102, 255, 1)',
+        ],
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'right',
+        }
+      }
+    }
+  });
+
+
+
+    // Récupérer les données du côté serveur (par exemple, en utilisant Flask)
+    var chartData = {
+        dates: {{ dates | tojson }},
+        entreprisesData: {{ entreprises_data | tojson }},
+        contactsData: {{ contacts_data | tojson }},
+        sitesData: {{ sites_data | tojson }}
+        
+    };
+
+    // Configurer le contexte du canvas
+    var ctx = document.getElementById('evolutionChart').getContext('2d');
+
+    // Configurer les données du graphique
+    var data = {
+        labels: chartData.dates,
+        datasets: [
+            {
+                label: 'Entreprises',
+                data: chartData.entreprisesData,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                fill: false
+            },
+            {
+                label: 'Contacts',
+                data: chartData.contactsData,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 2,
+                fill: false
+            },
+            {
+                label: 'Sites',
+                data: chartData.sitesData,
+                borderColor: 'rgba(255, 205, 86, 1)',
+                borderWidth: 2,
+                fill: false
+            }
+            // ... ajouter d'autres ensembles de données si nécessaire
+        ]
+    };
+
+    // Configurer les options du graphique
+    var options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: [{
+                type: 'time',
+                time: {
+                    unit: 'day',
+                    displayFormats: {
+                        day: 'YYYY-MM-DD'
+                    }
+                }
+            }],
+            y: [{
+                ticks: {
+                    beginAtZero: true
+                }
+            }]
+        }
+    };
+
+    // Créer le graphique
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: options
+    });
+
+
+
+    </script>
+
+{% endblock %}
