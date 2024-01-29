@@ -4,68 +4,50 @@
 <!-- DETAIL FORM -->
 <form action="" method="POST" enctype="multipart/form-data" class="form">
     <div class="formHeader row">
-        <h2 class="text-1 fl">Product Detail</h2>
+        <h2 class="text-1 fl">Détails de l'entreprise</h2>
         <div class="fr">
-            <button type="submit" class="btnSave bg-1 text-fff text-bold fr">SAVE</button><a href="" class="btnAdd fa fa-plus bg-1 text-fff"></a>
+            <button type="submit" class="btnSave bg-1 text-fff text-bold fr">ENREGISTRER</button>
+            <a href="" class="btnAdd fa fa-plus bg-1 text-fff"></a>
         </div>
     </div>
     <div class="formBody row">
         <div class="column s-6">
             <label class="inputGroup">
                 <span>Nom</span>
-                <span><input type="text" name="name"></span>
+                <span><input type="text" name="nom" value="{{ entreprise.nom }}"></span>
             </label>
             <label class="inputGroup">
                 <span>Secteur</span>
-                <span><input type="text" name="code"></span>
+                <span><input type="text" name="secteur_activite" value="{{ entreprise.secteur_activite }}"></span>
             </label>
             <label class="inputGroup">
-                <span>Price</span>
-                <span><input type="text" name="price"></span>
+                <span>Site Web</span>
+                <span><input type="text" name="site_web" value="{{ entreprise.site_web }}"></span>
             </label>
             <label class="inputGroup">
-                <span>Note</span>
-                <span><input type="text" name="note"></span>
+                <span>Chiffre d'affaires</span>
+                <span><input type="text" name="chiffre_affaires" value="{{ entreprise.chiffre_affaires }}"></span>
             </label>
+            <!-- Ajoutez d'autres champs si nécessaire -->
         </div>
         <div class="column s-6">
             <label class="inputGroup">
-                <span>Category</span>
-                <span>
-                    <select name="cate">
-                        <option value="cate01">Category01</option>
-                        <option value="cate02">Category02</option>
-                    </select>
-                    <i class="btnNewInput fa fa-plus bg-1 text-fff"></i>
-                </span>
+                <span>Adresse</span>
+                <span><input type="text" name="adresse" value="{{ entreprise.adresse }}"></span>
             </label>
             <label class="inputGroup">
-                <span>Category</span>
-                <span>
-                    <select name="cate">
-                        <option value="cate01">Category01</option>
-                        <option value="cate02">Category02</option>
-                    </select>
-                    <i class="btnNewInput fa fa-plus bg-1 text-fff"></i>
-                </span>
+                <span>Ville</span>
+                <span><input type="text" name="ville" value="{{ entreprise.ville }}"></span>
             </label>
+            <!-- Ajoutez d'autres champs si nécessaire -->
+        </div>
+        <div class="column">
             <label class="inputGroup">
-                <span>Category</span>
-                <span>
-                    <select name="cate">
-                        <option value="cate01">Category01</option>
-                        <option value="cate02">Category02</option>
-                    </select>
-                    <i class="btnNewInput fa fa-plus bg-1 text-fff"></i>
-                </span>
+                <span>Description</span>
+                <textarea name="description">{{ entreprise.description }}</textarea>
             </label>
         </div>
-      <div class="column">
-          <label class="inputGroup">
-              <span>Description</span>
-              <textarea name="description"></textarea>
-          </label>
-      </div>
     </div>
-</form> 
+</form>
+
 {% endblock %}

@@ -190,12 +190,31 @@
 
 <div id="pagination">
     <ul class="pagination list-inline text-center">
-        <li><a href="?page=1">1</a></li>
-        <li class="is-active"><a href="?page=2">2</a></li>
-        <li><a href="?page=3">3</a></li>
-        <li><a href="?page=4">4</a></li>
-        <li><a href="?page=5">5</a></li>
+        {% if page > 1 %}
+            <li><a href="?page={{ page - 1 }}">Prev</a></li>
+        {% endif %}
+        
+        {% set start_page = page - 4 if page - 4 > 0 else 1 %}
+        {% set end_page = page + 5 if page + 5 <= total_pages else total_pages %}
+        
+        {% for p in range(start_page, end_page + 1) %}
+            {% if p == page %}
+                <li class="is-active"><a href="?page={{ p }}">{{ p }}</a></li>
+            {% else %}
+                <li><a href="?page={{ p }}">{{ p }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page < total_pages %}
+            <li><a href="?page={{ page + 1 }}">Next</a></li>
+        {% endif %}
     </ul>
-</div>  
+</div>
+
+
+
+
+    
+    
 
 {% endblock %}

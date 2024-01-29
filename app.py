@@ -21,6 +21,7 @@ DATABASE_URL = config('DATABASE_URL', default='sqlite:///:memory:')
 
 app = Flask(__name__)
 
+
 # Set a secret key for session management
 app.secret_key = 'judesimon'
 
@@ -31,39 +32,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialisation de l'extension SQLAlchemy
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
-
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    password = db.Column(db.String(60), nullable=False)
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = User.query.filter_by(username=username).first()
-        if user and password == user.password:
-            login_user(user)
-            flash('Vous êtes connecté avec succès!', 'success')
-            return redirect(url_for('entreprises_graph'))
-        else:
-            flash('Échec de la connexion. Vérifiez votre nom d\'utilisateur et votre mot de passe.', 'danger')
-    return render_template('login.html')
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash('Vous êtes déconnecté avec succès!', 'success')
-    return redirect(url_for('login'))
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 
 # Modèle pour la table Entreprises
@@ -101,6 +69,66 @@ class Contacts(db.Model):
     # Définissez la relation entre Entreprises et Contacts_Entreprises
     entreprise = db.relationship('Entreprises', backref=db.backref('Contacts', lazy=True))
 
+class users(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nom_utilisateur = db.Column(db.String(100), unique=True, nullable=False)
+    mot_de_passe = db.Column(db.String(200), nullable=False)
+    email = db.Column(db.String(300), unique=True, nullable=False) 
+    
+#########################################################################################
+from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
+
+
+
+
+# Registration route
+@app.route('/', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+        # Use the recommended hash method 'pbkdf2:sha256'
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+        new_user = users(nom_utilisateur=username, mot_de_passe=hashed_password, email=email)
+        db.session.add(new_user)
+        db.session.commit()
+
+        return redirect(url_for('login'))
+
+    return render_template('user/signup.html')
+
+# Login route
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        user = users.query.filter_by(email = email).first()
+        if user and check_password_hash(user.mot_de_passe, password):
+            session['user_id'] = user.id
+            return redirect(url_for('entreprise_graph'))
+    return render_template('user/signup.html')
+
+    # Route de profil
+@app.route('/profile')
+def profile():
+    if 'user_id' in session:
+        user = users.query.get(session['user_id'])
+        if user:
+            return render_template('user/profil.html', user=user)
+    return redirect(url_for('login'))
+# Logout route
+    
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
+
+#########################################################################################
+
+
 ## ####################  Entreprises   ############################
     
             ###############   Graph ###########################
@@ -126,22 +154,28 @@ def get_unique_values():
         'localites_uniques': localites_uniques
     }
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/dentreprise_graph', methods=['GET', 'POST'])
 def entreprise_graph():
-    try:
-        # Construire la requête de base pour les entreprises
-        query_entreprises = build_base_query()
-        # Récupérer les filtres depuis le formulaire
-        filters = get_filters_from_request()
-        # Appliquer les filtres à la requête d'entreprises et obtenir la requête de contacts
-        query_entreprises, query_contacts = apply_filters(query_entreprises, Contacts.query, filters)
-        # Récupérer les données pour le graphique
-        chart_data = get_chart_data(query_entreprises, query_contacts)
-        # Utiliser maintenant la fonction get_unique_values
-        unique_values = get_unique_values()
-        return render_template('dashboard/entreprise_graph.html', **chart_data, **unique_values)
-    except Exception as e:
-        return render_template('erreur.html', error=str(e))
+    if 'user_id' in session:
+        user = users.query.get(session['user_id'])
+        if user:
+            try:
+                # Construire la requête de base pour les entreprises
+                query_entreprises = build_base_query()
+                # Récupérer les filtres depuis le formulaire
+                filters = get_filters_from_request()
+                # Appliquer les filtres à la requête d'entreprises et obtenir la requête de contacts
+                query_entreprises, query_contacts = apply_filters(query_entreprises, Contacts.query, filters)
+                # Récupérer les données pour le graphique
+                chart_data = get_chart_data(query_entreprises, query_contacts)
+                # Utiliser maintenant la fonction get_unique_values
+                unique_values = get_unique_values()
+                return render_template('dashboard/entreprise_graph.html', user=user, **chart_data, **unique_values)
+            except Exception as e:
+                return render_template('erreur.html', error=str(e))
+    
+    return redirect(url_for('login'))
+
 
 def build_base_query():
     return Entreprises.query
@@ -302,7 +336,6 @@ def get_table_data(query_entreprises, query_contacts):
             'Ville': entreprise.ville if hasattr(entreprise, 'ville') else ''
             # Add more fields as needed
         }
-
         # Fetch contacts related to the current entreprise
         contacts = [contact for contact in entreprise.Contacts if contact.type == 'Mail']
         if contacts:
@@ -314,18 +347,40 @@ def get_table_data(query_entreprises, query_contacts):
     return data_for_template
 
 
+def paginate(data_for_template, page, per_page):
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated_data = {
+        'entreprises': data_for_template['entreprises'][start:end],
+        'headers': data_for_template['headers']
+    }
+    return paginated_data
+
+
 @app.route('/extraction_entreprise', methods=['GET', 'POST'])
 def extraction_entreprise():
-    try:
-        sort_by = request.args.get('sort_by', 'alphabet')
-        query_entreprises = build_base_query()
-        filters = get_filters_from_request()
-        query_entreprises, query_contacts = apply_filters(query_entreprises, Contacts.query, filters)
-        table_data = get_table_data(query_entreprises, query_contacts)
-        unique_values = get_unique_values()
-        return render_template('dashboard/extraction_entreprise.html', **table_data , **unique_values)
-    except Exception as e:
-        return render_template('erreur.html', error=str(e))
+    if 'user_id' in session:
+        user = users.query.get(session['user_id'])
+        if user:
+            try:
+                sort_by = request.args.get('sort_by', 'alphabet')
+                page = request.args.get('page', 1, type=int)
+                per_page = 10
+                
+                query_entreprises = build_base_query()
+                filters = get_filters_from_request()
+                query_entreprises, query_contacts = apply_filters(query_entreprises, Contacts.query, filters)
+                table_data = get_table_data(query_entreprises, query_contacts)
+                
+                paginated_data = paginate(table_data, page, per_page)
+                total_pages = len(table_data['entreprises']) // per_page + (1 if len(table_data['entreprises']) % per_page != 0 else 0)
+
+                unique_values = get_unique_values()
+                return render_template('dashboard/extraction_entreprise.html', user=user,**paginated_data, total_pages=total_pages, **unique_values, page=page)
+            except Exception as e:
+                return render_template('erreur.html', user=user, error=str(e))
+    return redirect(url_for('login'))
+
     
 
 import pandas as pd
@@ -377,49 +432,74 @@ def delete_entreprise(entreprise_id):
 ####  Edit
 
 
-# Add this route to handle edit
+
+from sqlalchemy.exc import SQLAlchemyError
+
 @app.route('/edit_entreprise/<int:entreprise_id>', methods=['GET', 'POST'])
 def edit_entreprise(entreprise_id):
-    try:
-        # Fetch the entreprise based on the provided ID
-        entreprise = Entreprises.query.get_or_404(entreprise_id)
-        if request.method == 'POST':
-            # Update entreprise information based on form data
-            entreprise.nom = request.form['nom']
-            entreprise.secteur_activite = request.form['secteur_activite']
-            # Update other fields as needed
-            db.session.commit()
-            flash('Entreprise updated successfully!', 'success')
-            return redirect(url_for('extraction_entreprise'))
-        # Render the edit form
-        return render_template('dashboard/edit_entreprise.html', entreprise=entreprise)
-    except Exception as e:
-        return render_template('erreur.html', error=str(e))
+    if 'user_id' in session:
+        user = users.query.get(session['user_id'])
+        if user:
+            try:
+                # Assurez-vous que l'entreprise appartient à l'utilisateur actuel
+                entreprise = Entreprises.query.filter_by(entreprise_id=entreprise_id).first_or_404()
+
+                if request.method == 'POST':
+                    # Mise à jour de toutes les informations de l'entreprise basée sur les données du formulaire
+                    entreprise.nom = request.form['nom']
+                    entreprise.secteur_activite = request.form['secteur_activite']
+                    entreprise.site_web = request.form['site_web']
+                    entreprise.chiffre_affaires = request.form['chiffre_affaires']
+                    # Mettez à jour d'autres champs si nécessaire
+                    db.session.commit()
+
+                    flash('Entreprise mise à jour avec succès!', 'success')
+                    return redirect(url_for('extraction_entreprise'))
+
+                # Rendre le formulaire de modification
+                return render_template('dashboard/edit_entreprise.html', user=user, entreprise=entreprise)
+            except SQLAlchemyError as e:
+                return render_template('erreur.html', error=str(e))
+    return redirect(url_for('login'))
+
 
 
 @app.route('/particular_graph')
 def particular_graph():
-    return render_template('dashboard/particular_graph.html')
+    if 'user_id' in session:
+        user = users.query.get(session['user_id'])
+        if user:
+            return render_template('dashboard/particular_graph.html',user=user)
+    return redirect(url_for('login'))
 
 @app.route('/extraction_particular')
 def extraction_particular():
-    return render_template('dashboard/extraction_particular.html')
+    if 'user_id' in session:
+        user = users.query.get(session['user_id'])
+        if user:
+            return render_template('dashboard/extraction_particular.html',user=user)
+    return redirect(url_for('login'))
 
 @app.route('/parametre')
 def parametre():
-    return render_template('dashboard/parametre.html')
+    if 'user_id' in session:
+        user = users.query.get(session['user_id'])
+        if user:
+            return render_template('dashboard/parametre.html', user=user)
+    return redirect(url_for('login'))
 
-@app.route('/contact')
-def contact():
-    return render_template('dashboard/contact.html')
-
-@app.route('/profil')
-def profil():
-    return render_template('user/profil.html')
 
 @app.route('/erreur')
 def erreur():
-    return render_template('erreur.html')
+    if 'user_id' in session:
+        user = users.query.get(session['user_id'])
+        print(user)
+        if user:
+            return render_template('erreur.html',user=user)
+    return redirect(url_for('login'))
+
+
 
 if __name__ == '__main__':
+    
     app.run(debug=True)

@@ -18,7 +18,7 @@
                 <div class="sideArea">
                     <div class="avatar">
                         <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCNOdyoIXDDBztO_GC8MFLmG_p6lZ2lTDh1ZnxSDawl1TZY_Zw" alt="">
-                        <div class="avatarName">Welcome,<br>John Doe</div>
+                        <div class="avatarName">Welcome,<br>{{ user.nom_utilisateur }}</div>
                     </div>
                     <ul class="sideMenu">
                         <li><a href="{{ url_for('entreprise_graph') }}"><span class="fa fa-user-o"></span>Entreprises</a></li>
@@ -29,8 +29,7 @@
                                 <li><a href="{{ url_for('extraction_particular') }}"><span class="fa fa-list">Particulier</span></a></li>
                             </ul>
                         </li>
-                        <li><a href="{{ url_for('parametre') }}"><span class="fa fa-user-o"></span>Parametre</a></li>
-                        <li><a href="{{ url_for('contact') }}"><span class="fa fa-envelope-o"></span>Contact</a></li>
+                        <li><a href="javascript:void(0)" class="has-submenu"><span class="fa fa-table"></span>PARAMETRE</a>
                     </ul>
                 </div>
             <!--     SIDE AREA -->
@@ -39,9 +38,9 @@
                     <nav class="navTop row">
                         <div class="menuIcon fl"><span class="fa fa-bars"></span></div>
                         <div class="account fr">
-                            <div class="name has-submenu">John Doe<span class="fa fa-angle-down"></span></div>
+                            <div class="name has-submenu">{{ user.nom_utilisateur }}<span class="fa fa-angle-down"></span></div>
                             <ul class="accountLinks submenu">
-                                <li><a href="{{ url_for('profil') }}">Profil</a></li>
+                                <li><a href="{{ url_for('profile') }}">Profil</a></li>
                                 <li><a href="{{ url_for('logout') }}">Log out<span class="fa fa-sign-out fr"></span></a></li>
                             </ul>
                         </div>

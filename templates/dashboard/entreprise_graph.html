@@ -1,5 +1,6 @@
 {% extends "base/base.html" %}
 
+
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stylege.css') }}">
 <script src="{{ url_for('static', filename='js/scriptge.js') }}"></script>
@@ -79,44 +80,61 @@
 </div>
 
 <section class="grid">
-  <!-- 6 petits articles pour afficher les constantes -->
+  <!-- Small articles for displaying constants -->
   <article class="petit-article">
     <h1>Nombre d'entreprises</h1>
-    {{ total_entreprises }}
-  </article>
-  <article class="petit-article">
-    {{ total_contacts }}
-  </article>
-  <article class="petit-article">
-    {{ total_contacts_mail }}
-  </article>
-  <article class="petit-article">
-    {{ total_sites_web }}
-  </article>
-  <article class="petit-article">
-    {{ total_villes }}
-  </article>
-  <article class="petit-article">
-    {{ derniere_date_mise_a_jour }}
+    <p>{{ total_entreprises }}</p>
   </article>
 
-  <!-- 7 grands articles pour les graphiques -->
-  <article class="grand-article">
-    <canvas id="myChart" ></canvas>
+  <article class="petit-article">
+    <h1>Total Contacts</h1>
+    <p>{{ total_contacts }}</p>
   </article>
-  <article class="grand-article">
-    <canvas id="entrepriseVilleChart" ></canvas>
+
+  <article class="petit-article">
+    <h1>Total Contacts via Email</h1>
+    <p>{{ total_contacts_mail }}</p>
   </article>
-  <article class="grand-article">
-    <canvas id="entrepriseSecteurChart" ></canvas>
+
+  <article class="petit-article">
+    <h1>Total Sites Web</h1>
+    <p>{{ total_sites_web }}</p>
   </article>
+
+  <article class="petit-article">
+    <h1>Total Villes</h1>
+    <p>{{ total_villes }}</p>
+  </article>
+
+  <article class="petit-article">
+    <h1>Dernière Date de Mise à Jour</h1>
+    <p>{{ derniere_date_mise_a_jour }}</p>
+  </article>
+
+  <!-- Large articles for charts -->
   <article class="grand-article">
+    
+    <canvas id="myChart"></canvas>
+  </article>
+
+  <article class="grand-article">
+   
+    <canvas id="entrepriseVilleChart"></canvas>
+  </article>
+
+  <article class="grand-article">
+   
+    <canvas id="entrepriseSecteurChart"></canvas>
+  </article>
+
+  <article class="grand-article">
+    
     <canvas id="evolutionChart"></canvas>
   </article>
 </section>
 
-
 <script>
+  // Bar Chart
   var ctx = document.getElementById('myChart').getContext('2d');
   var myChart = new Chart(ctx, {
     type: 'bar',
@@ -126,8 +144,8 @@
         label: 'Effectif de chaque type de contact',
         data: {{ counts|tojson|safe }},
         backgroundColor: [
-          'rgba(75, 192, 192, 0.8)',
           'rgba(255, 99, 132, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
           'rgba(255, 205, 86, 0.8)',
           'rgba(54, 162, 235, 0.8)',
           'rgba(153, 102, 255, 0.8)',
@@ -135,8 +153,8 @@
         borderWidth: 1,
         borderColor: 'rgba(0, 0, 0, 0.1)',
         hoverBackgroundColor: [
-          'rgba(75, 192, 192, 1)',
           'rgba(255, 99, 132, 1)',
+          'rgba(75, 192, 192, 1)',
           'rgba(255, 205, 86, 1)',
           'rgba(54, 162, 235, 1)',
           'rgba(153, 102, 255, 1)',
@@ -189,8 +207,9 @@
     }
   });
 
-  var ctx = document.getElementById('entrepriseVilleChart').getContext('2d');
-  var entrepriseVilleChart = new Chart(ctx, {
+  // Doughnut Chart - Enterprise Distribution by City
+  var ctxVille = document.getElementById('entrepriseVilleChart').getContext('2d');
+  var entrepriseVilleChart = new Chart(ctxVille, {
     type: 'doughnut',
     data: {
       labels: {{ villes|tojson|safe }},
@@ -224,9 +243,9 @@
     }
   });
 
-
-  var ctx = document.getElementById('entrepriseSecteurChart').getContext('2d');
-  var entrepriseSecteurChart = new Chart(ctx, {
+  // Doughnut Chart - Enterprise Distribution by Sector
+  var ctxSecteur = document.getElementById('entrepriseSecteurChart').getContext('2d');
+  var entrepriseSecteurChart = new Chart(ctxSecteur, {
     type: 'doughnut',
     data: {
       labels: {{ secteurs_activite|tojson|safe }},
@@ -260,80 +279,65 @@
     }
   });
 
+  // Line Chart - Evolution of Data over Time
+  var chartData = {
+    dates: {{ dates | tojson }},
+    entreprisesData: {{ entreprises_data | tojson }},
+    contactsData: {{ contacts_data | tojson }},
+    sitesData: {{ sites_data | tojson }}
+  };
 
-
-    // Récupérer les données du côté serveur (par exemple, en utilisant Flask)
-    var chartData = {
-        dates: {{ dates | tojson }},
-        entreprisesData: {{ entreprises_data | tojson }},
-        contactsData: {{ contacts_data | tojson }},
-        sitesData: {{ sites_data | tojson }}
-        
-    };
-
-    // Configurer le contexte du canvas
-    var ctx = document.getElementById('evolutionChart').getContext('2d');
-
-    // Configurer les données du graphique
-    var data = {
-        labels: chartData.dates,
-        datasets: [
-            {
-                label: 'Entreprises',
-                data: chartData.entreprisesData,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 2,
-                fill: false
-            },
-            {
-                label: 'Contacts',
-                data: chartData.contactsData,
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 2,
-                fill: false
-            },
-            {
-                label: 'Sites',
-                data: chartData.sitesData,
-                borderColor: 'rgba(255, 205, 86, 1)',
-                borderWidth: 2,
-                fill: false
-            }
-            // ... ajouter d'autres ensembles de données si nécessaire
-        ]
-    };
-
-    // Configurer les options du graphique
-    var options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            x: [{
-                type: 'time',
-                time: {
-                    unit: 'day',
-                    displayFormats: {
-                        day: 'YYYY-MM-DD'
-                    }
-                }
-            }],
-            y: [{
-                ticks: {
-                    beginAtZero: true
-                }
-            }]
+  var ctxEvolution = document.getElementById('evolutionChart').getContext('2d');
+  var evolutionChart = new Chart(ctxEvolution, {
+    type: 'line',
+    data: {
+      labels: chartData.dates,
+      datasets: [
+        {
+          label: 'Entreprises',
+          data: chartData.entreprisesData,
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 2,
+          fill: false
+        },
+        {
+          label: 'Contacts',
+          data: chartData.contactsData,
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 2,
+          fill: false
+        },
+        {
+          label: 'Sites',
+          data: chartData.sitesData,
+          borderColor: 'rgba(255, 205, 86, 1)',
+          borderWidth: 2,
+          fill: false
         }
-    };
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: [{
+          type: 'time',
+          time: {
+            unit: 'day',
+            displayFormats: {
+              day: 'YYYY-MM-DD'
+            }
+          }
+        }],
+        y: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  });
+</script>
 
-    // Créer le graphique
-    var myChart = new Chart(ctx, {
-        type: 'line',
-        data: data,
-        options: options
-    });
-
-
-
-    </script>
 
 {% endblock %}

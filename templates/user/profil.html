@@ -1,5 +1,69 @@
 {% extends "base/base.html" %}
 
 {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <style>
+
+
+        .profile-card {
+            text-align: center;
+        }
+
+        .profile-img {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+
+        .profile-details {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>User Profile</h1>
+    </header>
+
+    <div class="container">
+        <div class="profile-card">
+            <img src="path/to/profile-image.jpg" alt="Profile Image" class="profile-img">
+            <div class="profile-details">
+                <p><strong>Nom d'utilisateur:</strong> {{ user.nom_utilisateur }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+            </div>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            // Add logic to handle logout (e.g., make a request to the server to invalidate the session)
+            alert('Logged out successfully');
+            // Redirect to the login page
+            window.location.href = '/login';  // Change this to the actual login page URL
+        }
+    </script>
+
+</body>
+</html>
 
 {% endblock %}
