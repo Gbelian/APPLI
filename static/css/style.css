@@ -533,7 +533,7 @@ strike {
 body {
     font-family: 'SFU Futura', Arial, sans-serif;
     font-size: 14px;
-    color: #2a3f54;
+    color: #2b2a54;
     background: #f7f7f7;
 }
 
@@ -1074,7 +1074,7 @@ label {
     background: #ccc;
 }
 .noUi-connect {
-    background: #2a3f54;
+    background: #c1c8cf;
 }
 .noUi-handle {
     outline: none;

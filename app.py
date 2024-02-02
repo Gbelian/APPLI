@@ -16,6 +16,8 @@ from decouple import config
 import os
 from sqlalchemy import distinct
 
+from sqlalchemy import func, distinct
+
 # Charger les variables d'environnement à partir du fichier .env
 DATABASE_URL = config('DATABASE_URL', default='sqlite:///:memory:')
 
@@ -167,7 +169,7 @@ def entreprise_graph():
                 # Appliquer les filtres à la requête d'entreprises et obtenir la requête de contacts
                 query_entreprises, query_contacts = apply_filters(query_entreprises, Contacts.query, filters)
                 # Récupérer les données pour le graphique
-                chart_data = get_chart_data(query_entreprises, query_contacts)
+                chart_data = get_updated_chart_data(query_entreprises, query_contacts)
                 # Utiliser maintenant la fonction get_unique_values
                 unique_values = get_unique_values()
                 return render_template('dashboard/entreprise_graph.html', user=user, **chart_data, **unique_values)
@@ -313,17 +315,154 @@ def get_chart_data(query_entreprises, query_contacts):
         'total_villes': total_villes,
         'derniere_date_mise_a_jour': derniere_date_mise_a_jour
     }
+################################# Graphique repris #################################
 
+from datetime import datetime, timedelta
+from sqlalchemy import func, distinct
 
+def get_updated_chart_data(query_entreprises, query_contacts):
+    today = datetime.now().date()
+
+    # Nombre total d'entreprises
+    total_entreprises = query_entreprises.count()
+
+    # Nombre total de contacts
+    total_contacts = query_contacts.count()
+
+    # Nombre total de contacts de type mail et pourcentage
+    total_contacts_mail = query_contacts.filter(Contacts.type == 'Mail').count()
+    pourcentage_mail = "{:.2f}%".format((total_contacts_mail / total_contacts) * 100) if total_contacts > 0 else "0.00%"
+
+    # Répétez le processus pour les autres types de contacts
+    total_contacts_inconnu = query_contacts.filter(Contacts.type == 'Inconnu').count()
+    pourcentage_inconnu = "{:.2f}%".format((total_contacts_inconnu / total_contacts) * 100) if total_contacts > 0 else "0.00%"
+
+    total_contacts_fixe = query_contacts.filter(Contacts.type == 'Fixe').count()
+    pourcentage_fixe = "{:.2f}%".format((total_contacts_fixe / total_contacts) * 100) if total_contacts > 0 else "0.00%"
+
+    total_contacts_mobile = query_contacts.filter(Contacts.type == 'Mobile').count()
+    pourcentage_mobile = "{:.2f}%".format((total_contacts_mobile / total_contacts) * 100) if total_contacts > 0 else "0.00%"
+
+    # Nombre total de sites web et pourcentage
+    total_sites_web = query_entreprises.filter(Entreprises.site_web != '').count()
+    pourcentage_sites_web = "{:.2f}%".format((total_sites_web / total_entreprises) * 100) if total_entreprises > 0 else "0.00%"
+
+    # Date de la dernière mise à jour
+    derniere_date_mise_a_jour = query_entreprises.with_entities(func.max(Entreprises.date_mise_a_jour)).scalar()
+
+    # Évolution du nombre d'entreprises par jour
+    entreprises_par_jour = query_entreprises.with_entities(
+        func.date(Entreprises.date_mise_a_jour),
+        func.count()
+    ).group_by(func.date(Entreprises.date_mise_a_jour)).all()
+
+    dates = [(today - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(30)]
+    entreprises_data = [next((count for date, count in entreprises_par_jour if date == d), 0) for d in dates]
+
+    # Calcul de l'évolution quotidienne
+    evolution_quotidienne = [0] + [entreprises_data[i] - entreprises_data[i - 1] for i in range(1, len(entreprises_data))]
+
+    # Pourcentage d'entreprises par secteur
+    entreprises_par_secteur = query_entreprises.with_entities(Entreprises.secteur_activite, func.count()).group_by(Entreprises.secteur_activite).all()
+    secteurs_activite = [entreprise[0] for entreprise in entreprises_par_secteur]
+    entreprises_par_secteur_counts = [entreprise[1] for entreprise in entreprises_par_secteur]
+
+    # Calcul du pourcentage pour chaque secteur
+    pourcentage_par_secteur = ["{:.2f}%".format((count / total_entreprises) * 100) for count in entreprises_par_secteur_counts]
+
+    # Créez une liste de dictionnaires pour passer les données à Jinja
+    entreprises_data = [{'Secteur': secteur, 'Effectifs': count, 'Pourcentage': pourcentage} for secteur, count, pourcentage in zip(secteurs_activite, entreprises_par_secteur_counts, pourcentage_par_secteur)]
+
+    # Pourcentage d'entreprises par département
+    entreprises_par_departement = query_entreprises.with_entities(Entreprises.departement, func.count()).group_by(Entreprises.departement).all()
+    departements = [entreprise[0] for entreprise in entreprises_par_departement]
+    entreprises_par_departement_counts = [entreprise[1] for entreprise in entreprises_par_departement]
+    pourcentage_par_departement = [(count / total_entreprises) * 100 for count in entreprises_par_departement_counts]
     
-        ###############   Extraction ###########################
+    # Tableau d'informations sur les entreprises
+    tableau_informations_entreprises = {
+        'Total Entreprises': total_entreprises,
+        'Total Contacts Mail': total_contacts_mail,
+        'Pourcentage Contacts Mail': pourcentage_mail,
+        'Total Contacts Inconnu': total_contacts_inconnu,
+        'Pourcentage Contacts Inconnu': pourcentage_inconnu,
+        'Total Contacts Fixe': total_contacts_fixe,
+        'Pourcentage Contacts Fixe': pourcentage_fixe,
+        'Total Contacts Mobile': total_contacts_mobile,
+        'Pourcentage Contacts Mobile': pourcentage_mobile,
+        'Total Sites Web': total_sites_web,
+        'Pourcentage Sites Web': pourcentage_sites_web,
+    }
+
+    return {
+        'total_entreprises': total_entreprises,
+        'entreprises_par_secteur_counts': entreprises_par_secteur_counts,
+        'total_contacts_mail': total_contacts_mail,
+        'pourcentage_mail': pourcentage_mail,
+        'total_contacts_inconnu': total_contacts_inconnu,
+        'pourcentage_inconnu': pourcentage_inconnu,
+        'total_contacts_fixe': total_contacts_fixe,
+        'pourcentage_fixe': pourcentage_fixe,
+        'total_contacts_mobile': total_contacts_mobile,
+        'pourcentage_mobile': pourcentage_mobile,
+        'total_sites_web': total_sites_web,
+        'pourcentage_sites_web': pourcentage_sites_web,
+        'derniere_date_mise_a_jour': derniere_date_mise_a_jour,
+        'dates': dates,
+        'entreprises_data': entreprises_data,
+        'evolution_quotidienne': evolution_quotidienne,
+        'secteurs_activite': secteurs_activite,
+        'pourcentage_par_secteur': pourcentage_par_secteur,
+        'departements': departements,
+        'pourcentage_par_departement': pourcentage_par_departement,
+        'tableau_informations_entreprises': tableau_informations_entreprises,
+    }
+
+
+
+
 
 def get_table_data(query_entreprises, query_contacts):
     entreprises = query_entreprises.all()
+    total_entreprises = query_entreprises.count()
 
+    # Nombre total de contacts
+    total_contacts = query_contacts.count()
+
+    # Nombre total de contacts de type mail et pourcentage
+    total_contacts_mail = query_contacts.filter(Contacts.type == 'Mail').count()
+    pourcentage_mail = "{:.2f}%".format((total_contacts_mail / total_contacts) * 100) if total_contacts > 0 else "0.00%"
+
+    # Répétez le processus pour les autres types de contacts
+    total_contacts_inconnu = query_contacts.filter(Contacts.type == 'Inconnu').count()
+    pourcentage_inconnu = "{:.2f}%".format((total_contacts_inconnu / total_contacts) * 100) if total_contacts > 0 else "0.00%"
+
+    total_contacts_fixe = query_contacts.filter(Contacts.type == 'Fixe').count()
+    pourcentage_fixe = "{:.2f}%".format((total_contacts_fixe / total_contacts) * 100) if total_contacts > 0 else "0.00%"
+
+    total_contacts_mobile = query_contacts.filter(Contacts.type == 'Mobile').count()
+    pourcentage_mobile = "{:.2f}%".format((total_contacts_mobile / total_contacts) * 100) if total_contacts > 0 else "0.00%"
+
+    # Nombre total de sites web et pourcentage
+    total_sites_web = query_entreprises.filter(Entreprises.site_web != '').count()
+    pourcentage_sites_web = "{:.2f}%".format((total_sites_web / total_entreprises) * 100) if total_entreprises > 0 else "0.00%"
+   
     data_for_template = {
         'entreprises': [],
-        'headers': ['Nom', 'Secteur', 'Site Web', 'Mail', 'Ville']
+        'headers': ['Nom', 'Secteur', 'Site Web', 'Mail', 'Ville', 'Contact Mobile', 'Contact Fixe', 'Adresse'],
+        'total_entreprises': total_entreprises,
+        'total_contacts': total_contacts,
+        'total_contacts_mail': total_contacts_mail,
+        'pourcentage_mail': pourcentage_mail,
+        'total_contacts_inconnu': total_contacts_inconnu,
+        'pourcentage_inconnu': pourcentage_inconnu,
+        'total_contacts_fixe': total_contacts_fixe,
+        'pourcentage_fixe': pourcentage_fixe,
+        'total_contacts_mobile': total_contacts_mobile,
+        'pourcentage_mobile': pourcentage_mobile,
+        'total_sites_web': total_sites_web,
+        'pourcentage_sites_web': pourcentage_sites_web
+        # Ajoutez d'autres informations calculées au besoin
     }
 
     for entreprise in entreprises:
@@ -333,18 +472,34 @@ def get_table_data(query_entreprises, query_contacts):
             'Secteur': entreprise.secteur_activite,
             'Site Web': entreprise.site_web,
             'Mail': '',
-            'Ville': entreprise.ville if hasattr(entreprise, 'ville') else ''
-            # Add more fields as needed
+            'Ville': entreprise.ville if hasattr(entreprise, 'ville') else '',
+            'Contact Mobile': '',  # Ajoutez la valeur du contact mobile ici
+            'Contact Fixe': '',    # Ajoutez la valeur du contact fixe ici
+            'Adresse': ''           # Ajoutez la valeur de l'adresse ici
+            # Ajoutez d'autres champs comme nécessaire
         }
         # Fetch contacts related to the current entreprise
-        contacts = [contact for contact in entreprise.Contacts if contact.type == 'Mail']
-        if contacts:
-            # Use the first email contact as the 'Mail' value
-            row_data['Mail'] = contacts[0].valeur
+        contacts_mail = [contact for contact in entreprise.Contacts if contact.type == 'Mail']
+        if contacts_mail:
+            row_data['Mail'] = contacts_mail[0].valeur
+
+        contacts_mobile = [contact for contact in entreprise.Contacts if contact.type == 'Mobile']
+        if contacts_mobile:
+            row_data['Contact Mobile'] = contacts_mobile[0].valeur
+
+        contacts_fixe = [contact for contact in entreprise.Contacts if contact.type == 'Fixe']
+        if contacts_fixe:
+            row_data['Contact Fixe'] = contacts_fixe[0].valeur
+
+        row_data['Adresse'] = entreprise.adresse if hasattr(entreprise, 'adresse') else ''
+        # Ajoutez d'autres valeurs de contact comme nécessaire
 
         data_for_template['entreprises'].append(row_data)
 
+      
+
     return data_for_template
+
 
 
 def paginate(data_for_template, page, per_page):
@@ -352,7 +507,20 @@ def paginate(data_for_template, page, per_page):
     end = start + per_page
     paginated_data = {
         'entreprises': data_for_template['entreprises'][start:end],
-        'headers': data_for_template['headers']
+        'headers': data_for_template['headers'],
+        'total_entreprises': data_for_template['total_entreprises'],
+        'total_contacts': data_for_template['total_contacts'],
+        'total_contacts_mail':data_for_template['total_contacts_mail'],
+        'pourcentage_mail': data_for_template['pourcentage_mail'],
+        'total_contacts_inconnu': data_for_template['total_contacts_inconnu'],
+        'pourcentage_inconnu': data_for_template['pourcentage_inconnu'],
+        'total_contacts_fixe': data_for_template['total_contacts_fixe'],
+        'pourcentage_fixe': data_for_template['pourcentage_fixe'],
+        'total_contacts_mobile': data_for_template['total_contacts_mobile'],
+        'pourcentage_mobile':data_for_template['pourcentage_mobile'],
+        'total_sites_web': data_for_template['total_sites_web'],
+        'pourcentage_sites_web': data_for_template['pourcentage_sites_web']
+    
     }
     return paginated_data
 
@@ -373,8 +541,9 @@ def extraction_entreprise():
                 table_data = get_table_data(query_entreprises, query_contacts)
                 
                 paginated_data = paginate(table_data, page, per_page)
+               
                 total_pages = len(table_data['entreprises']) // per_page + (1 if len(table_data['entreprises']) % per_page != 0 else 0)
-
+               
                 unique_values = get_unique_values()
                 return render_template('dashboard/extraction_entreprise.html', user=user,**paginated_data, total_pages=total_pages, **unique_values, page=page)
             except Exception as e:
@@ -497,6 +666,11 @@ def erreur():
         if user:
             return render_template('erreur.html',user=user)
     return redirect(url_for('login'))
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard/dashboard.html')
+
 
 
 

@@ -1,65 +1,123 @@
-/* Style des valeurs dans les petits articles */
-.petit-article p {
-  font-size: 1.5rem;
-  color: #555; /* Couleur du texte */
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
 }
 
-/* Style des valeurs dans les grands articles */
-.grand-article p {
-  font-size: 2rem;
-  color: #555; /* Couleur du texte */
+.dashboard-container {
+  max-width: 1200px;
+  margin: 20px auto;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Effet de survol pour les valeurs */
-.petit-article p:hover,
-.grand-article p:hover {
-  color: #6755cc; /* Couleur du texte en survol */
+.section-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
-
-.grid {
+.rectangle-section {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
   justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
-/* Style des petits articles */
-.petit-article {
-  flex: 1 0 calc(10% - 20px); /* Réglez la largeur selon les besoins */
-  background-color: #f1f1f1;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease-in-out;
+.rectangle-section .table {
+  flex: 0 0 100%;
+  margin-bottom: 10px;
 }
 
-/* Ajustements pour les écrans de taille inférieure à 768px */
-@media (max-width: 768px) {
-  .petit-article {
-    flex-basis: calc(100% - 20px);
-  }
+.rectangle-section .rectangle {
+  flex: 0 0 calc(49% - 10px);
+  background-color: #80b3fa;
+  padding: 15px;
+  margin: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Style des grands articles */
-.grand-article {
-  flex: 1 0 calc(45% - 20px); /* Réglez la largeur selon les besoins */
-  background-color: #f1f1f1;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease-in-out;
+.table-graph-section {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
-/* Ajustements pour les écrans de taille inférieure à 768px */
-@media (max-width: 768px) {
-  .grand-article {
-    flex-basis: calc(100% - 20px);
-  }
+.table-graph-section .graph {
+  flex: 0 0 calc(50% - 10px);
+  margin-bottom: 10px;
 }
 
-/* Effet de survol */
-.petit-article:hover,
-.grand-article:hover {
-  transform: scale(1.05);
+.table-graph-section .middle-squares {
+  flex: 0 0 calc(50% - 10px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.table-graph-section .middle-squares .square {
+  background-color: #3f41b4;
+  padding: 15px;
+  margin: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.table-graph-section .table {
+  flex: 0 0 100%;
+}
+
+.table-graph-section table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 15px;
+}
+
+.table-graph-section th, .table-graph-section td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.table-graph-section th {
+  background-color: #f2f2f2;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+
+.graph {
+  position: relative;
+  
+}
+
+.graph-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 10px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  margin-bottom: 20px; /* Ajustez selon votre besoin */
+}
+
+.graph-canvas {
+  width: 100%;
+  height: auto;
+  text-align: center;
 }
