@@ -1,19 +1,20 @@
 {% extends "base/base.html" %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stylege.css') }}">
 <script src="{{ url_for('static', filename='js/scriptge.js') }}"></script>
 
 <div class="row filterGroup">
     <form action="{{ url_for('entreprise_graph') }}" method="POST" class="formSearch fl">
         <input type="text" class="inputSearch" name="search" placeholder="Search">
-        <button type="submit" class=""><i class="fa-solid fa-magnifying-glass"></i></button>
+        <button type="submit" class=""><i class="fa fa-search"></i></button>
     </form>
 
     <div class="areaFilter fr row">
 
         <div class="boxSelect fr">
-            <div class="titleSelect">Sort by</div>
+            <div class="titleSelect">Trier par</div>
             <ul class="optionSelect">
                 <li><a href="{{ url_for('entreprise_graph', sort_by='alphabet') }}">Alphabet</a></li>
                 <li><a href="{{ url_for('entreprise_graph', sort_by='chiffre_affaire_asc') }}">Chiffre d'affaire, Ascending</a></li>
@@ -23,9 +24,9 @@
         </div>
         <!-- FILTER -->
       
-        <div class="btnFilter fr bg-fff"><span class="fa fa-filter"></span>Filter</div>
+        <div class="btnFilter fr bg-fff"><span class="fa fa-filter"></span>Filtrer</div>
         <div class="boxFilter">
-            <div class="btnFilter"><span class="fa fa-close"></span>Close</div>
+            <div class="btnFilter"><span class="fa fa-close"></span>Fermer</div>
             <!-- GROUP -->
             <form action="{{ url_for('entreprise_graph') }}" method="post">
             <div class="groupInput">
@@ -81,8 +82,8 @@
           {{ total_entreprises }}
       </article>
       <article class="rectangle">
-          <h2 class="section-title">Total Contacts Inconnu</h2>
-          {{ total_contacts_inconnu }} ({{ pourcentage_inconnu }}%)
+          <h2 class="section-title">Total Contacts Mail</h2>
+          {{ total_contacts_mail }} ({{ pourcentage_mail}}%)
       </article>
       <article class="rectangle">
           <h2 class="section-title">Total Contacts Fixe</h2>
@@ -96,13 +97,7 @@
 
   <section class="table-graph-section">
         <article class="graph">
-          <div class="graph-title">
-              <h1>Entreprises par département</h1>
-          </div>
-          
-          <div class="graph-canvas">
-              <canvas id="departementChart" width="800" height="400"></canvas>
-          </div>
+            <canvas id="evolutionChart" width="800" height="400"></canvas>
       </article>
       <div class="middle-squares">
           <article class="square">
@@ -121,20 +116,10 @@
 
           <section class="table-graph-section">
             <article class="graph">
-              <div class="graph-title">
-                  <h1>Evolution de la base </h1>
-              </div>
-              <div class="graph-canvas">
                 <canvas id="evolutionChart" width="800" height="400"></canvas>
-              </div>
           </article>
           <article class="graph">
-            <div class="graph-title">
-                <h1>Secteur d'activité</h1>
-            </div>
-            <div class="graph-canvas">
-              <canvas id="evolutionChart" width="800" height="400"></canvas>
-            </div>
+            <canvas id="departementChart" width="800" height="400"></canvas>
         </article>
         </section>
 
@@ -161,93 +146,105 @@
       </article>
   </section>
 </div>
-
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-      // Récupérer les données du serveur (à partir de votre objet chart_data)
-      var dates = {{ dates | tojson }};
-      var evolutionData = {{ evolution_quotidienne | tojson }};
-      var departementLabels = {{ departements | tojson }};
-      var pourcentageParDepartement = {{ pourcentage_par_departement | tojson }};
-  
-      // Couleurs différentes pour le graphique d'évolution quotidienne
-      var evolutionChartBorderColor = 'rgba(255, 99, 132, 1)';
-      var evolutionChartBackgroundColor = 'rgba(255, 99, 132, 0.2)';
-  
-      // Couleurs différentes pour le graphique de pourcentage par département
-      var departementChartColors = [
-          'rgba(255, 0, 0, 0.7)',
-          'rgba(0, 128, 0, 0.7)',
-          'rgba(0, 0, 255, 0.7)',
-          'rgba(255, 165, 0, 0.7)',
-          'rgba(128, 0, 128, 0.7)',
-          'rgba(255, 206, 86, 0.7)',
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(54, 162, 235, 0.7)',
-          'rgba(255, 159, 64, 0.7)',
-          'rgba(50, 205, 50, 0.7)',
-          'rgba(153, 102, 255, 0.7)',
-          'rgba(255, 0, 0, 0.7)'
-          // Ajoutez plus de couleurs au besoin
-      ];
-  
-      // Créer un objet Chart pour le graphique d'évolution quotidienne
-      var evolutionChartCtx = document.getElementById('evolutionChart').getContext('2d');
-      var evolutionChart = new Chart(evolutionChartCtx, {
-          type: 'line',
-          data: {
-              labels: dates,
-              datasets: [{
-                  label: 'Évolution quotidienne',
-                  data: evolutionData,
-                  borderColor: evolutionChartBorderColor,
-                  backgroundColor: evolutionChartBackgroundColor,
-                  borderWidth: 2,
-                  fill: true
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                  x: {
-                      type: 'linear',
-                      position: 'bottom'
-                  },
-                  y: {
-                      min: 0
-                  }
-              }
-          }
-      });
-  
-      // Créer un objet Chart pour le graphique de pourcentage par département
-      var departementChartCtx = document.getElementById('departementChart').getContext('2d');
-      var departementChart = new Chart(departementChartCtx, {
-          type: 'doughnut',
-          data: {
-              labels: departementLabels,
-              datasets: [{
-                  data: pourcentageParDepartement,
-                  backgroundColor: departementChartColors,
-                  borderWidth: 1
-              }]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              legend: {
-                  position: 'right', // La légende en colonne sur le côté droit
-                  align: 'center',
-                  labels: {
-                      boxWidth: 15, // Largeur de la case de couleur
-                      padding: 15 // Espacement entre les cases de couleur
-                  }
-              }
-          }
-      });
-  });
+    document.addEventListener('DOMContentLoaded', function () {
+        // Récupérer les données du serveur (à partir de votre objet chart_data)
+        var dates = {{ dates | tojson }};
+        var evolutionData = {{ evolution_quotidienne | tojson }};
+        var departementLabels = {{ departements | tojson }};
+        var pourcentageParDepartement = {{ pourcentage_par_departement | tojson }};
+    
+        // Couleurs différentes pour le graphique d'évolution quotidienne
+        var evolutionChartBorderColor = 'rgba(255, 99, 132, 1)';
+        var evolutionChartBackgroundColor = 'rgba(255, 99, 132, 0.2)';
+    
+        // Couleurs différentes pour le graphique de pourcentage par département
+        var departementChartColors = [
+            'rgba(255, 0, 0, 0.7)',
+            'rgba(0, 128, 0, 0.7)',
+            'rgba(0, 0, 255, 0.7)',
+            'rgba(255, 165, 0, 0.7)',
+            'rgba(128, 0, 128, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(50, 205, 50, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 0, 0, 0.7)'
+            // Ajoutez plus de couleurs au besoin
+        ];
+    
+        // Créer un objet Chart pour le graphique d'évolution quotidienne
+        var evolutionChartCtx = document.getElementById('evolutionChart').getContext('2d');
+        var evolutionChart = new Chart(evolutionChartCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Évolution quotidienne',
+                    data: evolutionData,
+                    borderColor: evolutionChartBorderColor,
+                    backgroundColor: evolutionChartBackgroundColor,
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom'
+                    },
+                    y: {
+                        min: 0
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Graphique d\'évolution quotidienne'
+                    }
+                }
+            }
+        });
+    
+        // Créer un objet Chart pour le graphique de pourcentage par département
+        var departementChartCtx = document.getElementById('departementChart').getContext('2d');
+        var departementChart = new Chart(departementChartCtx, {
+            type: 'doughnut',
+            data: {
+                labels: departementLabels,
+                datasets: [{
+                    data: pourcentageParDepartement,
+                    backgroundColor: departementChartColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    position: 'right', // La légende en colonne sur le côté droit
+                    
+                    labels: {
+                        boxWidth: 5, // Largeur de la case de couleur
+                        padding: 10 // Espacement entre les cases de couleur
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Graphique de pourcentage par département'
+                    }
+                }
+            }
+        });
+    });
   </script>
+  
   
 
 {% endblock %}

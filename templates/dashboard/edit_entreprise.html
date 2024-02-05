@@ -1,6 +1,7 @@
 {% extends "base/base.html" %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 <!-- DETAIL FORM -->
 <form action="" method="POST" enctype="multipart/form-data" class="form">
     <div class="formHeader row">
@@ -28,23 +29,91 @@
                 <span>Chiffre d'affaires</span>
                 <span><input type="text" name="chiffre_affaires" value="{{ entreprise.chiffre_affaires }}"></span>
             </label>
-            <!-- Ajoutez d'autres champs si nécessaire -->
-        </div>
-        <div class="column s-6">
+            <label class="inputGroup">
+                <span>Numéro d'identification</span>
+                <span><input type="text" name="numero_identification" value="{{ entreprise.numero_identification }}"></span>
+            </label>
             <label class="inputGroup">
                 <span>Adresse</span>
                 <span><input type="text" name="adresse" value="{{ entreprise.adresse }}"></span>
             </label>
             <label class="inputGroup">
+                <span>Localité</span>
+                <span><input type="text" name="localite" value="{{ entreprise.localite }}"></span>
+            </label>
+            <label class="inputGroup">
                 <span>Ville</span>
                 <span><input type="text" name="ville" value="{{ entreprise.ville }}"></span>
             </label>
-            <!-- Ajoutez d'autres champs si nécessaire -->
+            <label class="inputGroup">
+                <span>Arrondissement</span>
+                <span><input type="text" name="arrondissement" value="{{ entreprise.arrondissement }}"></span>
+            </label>
+            <label class="inputGroup">
+                <span>Commune</span>
+                <span><input type="text" name="commune" value="{{ entreprise.commune }}"></span>
+            </label>
+            <label class="inputGroup">
+                <span>Département</span>
+                <span><input type="text" name="departement" value="{{ entreprise.departement }}"></span>
+            </label>
+            <label class="inputGroup">
+                <span>Pays</span>
+                <span><input type="text" name="pays" value="{{ entreprise.pays }}"></span>
+            </label>
+            <label class="inputGroup">
+                <span>Code postal</span>
+                <span><input type="text" name="code_postal" value="{{ entreprise.code_postal }}"></span>
+            </label>
+            <label class="inputGroup">
+                <span>Opt-in</span>
+                <span><input type="checkbox" name="opt_in" {% if entreprise.opt_in %}checked{% endif %}></span>
+            </label>
+            <label class="inputGroup">
+                <span>Status SMS</span>
+                <span><input type="checkbox" name="status_sms" {% if entreprise.status_sms %}checked{% endif %}></span>
+            </label>
+            <label class="inputGroup">
+                <span>Status Appel</span>
+                <span><input type="checkbox" name="status_appel" {% if entreprise.status_appel %}checked{% endif %}></span>
+            </label>
+            <label class="inputGroup">
+                <span>Status Mail</span>
+                <span><input type="checkbox" name="status_mail" {% if entreprise.status_mail %}checked{% endif %}></span>
+            </label>
         </div>
-        <div class="column">
+        <div class="column s-6">
             <label class="inputGroup">
                 <span>Description</span>
                 <textarea name="description">{{ entreprise.description }}</textarea>
+            </label>
+            <!-- Add fields for contacts -->
+            <label class="inputGroup">
+                <span>Contacts</span>
+                <div id="contacts-container">
+                    <!-- Add dynamic fields for contacts using JavaScript if needed -->
+                    {% for contact in entreprise.Contacts %}
+                        <div class="contact-row">
+                            <label>
+                                <span>Type de contact</span>
+                                <input type="text" name="contacts[{{ loop.index0 }}][type]" value="{{ contact.type }}">
+                            </label>
+                            <label>
+                                <span>Valeur du contact</span>
+                                <input type="text" name="contacts[{{ loop.index0 }}][valeur]" value="{{ contact.valeur }}">
+                            </label>
+                            <label>
+                                <span>Sources du contact</span>
+                                <input type="text" name="contacts[{{ loop.index0 }}][sources]" value="{{ contact.sources }}">
+                            </label>
+                            <label>
+                                <span>Status du contact</span>
+                                <input type="checkbox" name="contacts[{{ loop.index0 }}][status]" {% if contact.status %}checked{% endif %}>
+                            </label>
+                            <!-- Add other contact fields as needed -->
+                        </div>
+                    {% endfor %}
+                </div>
             </label>
         </div>
     </div>

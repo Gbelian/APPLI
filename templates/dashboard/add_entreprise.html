@@ -1,0 +1,101 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<!-- DETAIL FORM -->
+<form action="" method="POST" enctype="multipart/form-data" class="form">
+    <div class="formHeader row">
+        <h2 class="text-1 fl">Détails de l'entreprise</h2>
+        <div class="fr">
+            <button type="submit" class="btnSave bg-1 text-fff text-bold fr">ENREGISTRER</button>
+            <a href="" class="btnAdd fa fa-plus bg-1 text-fff"></a>
+        </div>
+    </div>
+    <div class="formBody row">
+        <div class="column s-6">
+            <label class="inputGroup">
+                <span>Nom</span>
+                <span><input type="text" name="nom" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Secteur</span>
+                <span><input type="text" name="secteur_activite" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Site Web</span>
+                <span><input type="text" name="site_web" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Chiffre d'affaires</span>
+                <span><input type="text" name="chiffre_affaires" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Numéro d'identification</span>
+                <span><input type="text" name="numero_identification" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Adresse</span>
+                <span><input type="text" name="adresse" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Localité</span>
+                <span><input type="text" name="localite" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Ville</span>
+                <span><input type="text" name="ville" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Arrondissement</span>
+                <span><input type="text" name="arrondissement" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Commune</span>
+                <span><input type="text" name="commune" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Département</span>
+                <span><input type="text" name="departement" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Pays</span>
+                <span><input type="text" name="pays" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Code postal</span>
+                <span><input type="text" name="code_postal" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Opt-in</span>
+                <span><input type="checkbox" name="opt_in" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Status SMS</span>
+                <span><input type="checkbox" name="status_sms" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Status Appel</span>
+                <span><input type="checkbox" name="status_appel" ></span>
+            </label>
+            <label class="inputGroup">
+                <span>Status Mail</span>
+                <span><input type="checkbox" name="status_mail" ></span>
+            </label>
+        </div>
+        <div class="column s-6">
+            <label class="inputGroup">
+                <span>Description</span>
+                <textarea name="description"></textarea>
+            </label>
+            <!-- Add fields for contacts -->
+            <label class="inputGroup">
+                <span>Contacts</span>
+                <div id="contacts-container">
+                    <!-- Add dynamic fields for contacts using JavaScript if needed -->
+                </div>
+            </label>
+        </div>
+    </div>
+</form>
+
+{% endblock %}

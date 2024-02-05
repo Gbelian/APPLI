@@ -182,6 +182,54 @@ def entreprise_graph():
 def build_base_query():
     return Entreprises.query
 
+
+from sqlalchemy import or_
+
+
+from sqlalchemy.orm import aliased
+
+from sqlalchemy.orm import aliased
+
+def apply_filters(query_entreprises, query_contacts, filters):
+    if filters['secteur_activite']:
+        # Filtrer les entreprises par secteur d'activité
+        entreprise_alias = aliased(Entreprises)
+        query_entreprises = query_entreprises.join(entreprise_alias, Entreprises.entreprise_id == entreprise_alias.entreprise_id).filter(entreprise_alias.secteur_activite == filters['secteur_activite'])
+        # Filtrer les contacts associés aux entreprises filtrées par secteur d'activité
+        query_contacts = query_contacts.join(entreprise_alias, Contacts.entreprise_id == entreprise_alias.entreprise_id).filter(entreprise_alias.secteur_activite == filters['secteur_activite'])
+    if filters['ville']:
+        # Filtrer les entreprises par ville
+        query_entreprises = query_entreprises.filter_by(ville=filters['ville'])
+        # Filtrer les contacts associés aux entreprises filtrées par ville
+        query_contacts = query_contacts.join(Entreprises, Contacts.entreprise_id == Entreprises.entreprise_id).filter(Entreprises.ville == filters['ville'])
+    if filters['type_contact']:
+        # Filtrer les entreprises par type de contact
+        query_entreprises = query_entreprises.filter(Entreprises.Contacts.any(type=filters['type_contact']))
+        # Filtrer les contacts par type
+        query_contacts = query_contacts.filter_by(type=filters['type_contact'])
+    if filters['departement']:
+        # Filtrer les entreprises par département
+        query_entreprises = query_entreprises.filter_by(departement=filters['departement'])
+        # Filtrer les contacts associés aux entreprises filtrées par département
+        query_contacts = query_contacts.join(Entreprises, Contacts.entreprise_id == Entreprises.entreprise_id).filter(Entreprises.departement == filters['departement'])
+    if filters['commune']:
+        # Filtrer les entreprises par commune
+        query_entreprises = query_entreprises.filter_by(commune=filters['commune'])
+        # Filtrer les contacts associés aux entreprises filtrées par commune
+        query_contacts = query_contacts.join(Entreprises, Contacts.entreprise_id == Entreprises.entreprise_id).filter(Entreprises.commune == filters['commune'])
+    if filters['search_term']:
+        # Filtrer les entreprises par terme de recherche
+        entreprise_filter = or_(Entreprises.nom.ilike(f"%{filters['search_term']}%"))
+        query_entreprises = query_entreprises.filter(entreprise_filter)
+
+        # Filtrer les contacts par terme de recherche
+        contact_filter = or_(Contacts.type.ilike(f"%{filters['search_term']}%"), Contacts.valeur.ilike(f"%{filters['search_term']}%"), Contacts.sources.ilike(f"%{filters['search_term']}%"))
+        query_contacts = query_contacts.filter(contact_filter)
+
+    return query_entreprises, query_contacts
+
+
+
 def get_filters_from_request():
     return {
         'secteur_activite': request.form.get('secteur_activite'),
@@ -197,29 +245,6 @@ def get_filters_from_request():
     }
 
 
-def apply_filters(query_entreprises, query_contacts, filters):
-    if filters['secteur_activite']:
-        query_entreprises = query_entreprises.filter_by(secteur_activite=filters['secteur_activite'])
-    if filters['ville']:
-        query_entreprises = query_entreprises.filter_by(ville=filters['ville'])
-    
-    if filters['type_contact']:
-        query_entreprises = query_entreprises.filter(Entreprises.Contacts.any(type=filters['type_contact']))
-        query_contacts = query_contacts.filter_by(type=filters['type_contact'])
-
-    if filters['departement']:
-        query_entreprises = query_entreprises.filter_by(departement=filters['departement'])
-    
-    if filters['commune']:
-        query_entreprises = query_entreprises.filter_by(commune=filters['commune'])
-
-    if filters['search_term']:
-        query_entreprises = query_entreprises.filter(Entreprises.nom.ilike(f"%{filters['search_term']}%"))
-
-    return query_entreprises, query_contacts
-
-
-
 def get_chart_data(query_entreprises, query_contacts):
     today = datetime.now().date()
 
@@ -227,10 +252,10 @@ def get_chart_data(query_entreprises, query_contacts):
         func.date(Entreprises.date_mise_a_jour),
         func.count()
     ).group_by(func.date(Entreprises.date_mise_a_jour)).all()
-   
 
     # Générez une liste de dates à partir de la première date jusqu'à aujourd'hui
     dates = [(today - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(30)]
+    # Afficher les dates de la période de 30 jours
 
     # Obtenez les données par jour pour le nombre total de contacts
     contacts_par_jour = query_contacts.with_entities(
@@ -321,18 +346,18 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, distinct
 
 def get_updated_chart_data(query_entreprises, query_contacts):
+    from sqlalchemy.sql import func
+    from datetime import datetime, timedelta
     today = datetime.now().date()
 
     # Nombre total d'entreprises
     total_entreprises = query_entreprises.count()
-
     # Nombre total de contacts
     total_contacts = query_contacts.count()
-
+    
     # Nombre total de contacts de type mail et pourcentage
     total_contacts_mail = query_contacts.filter(Contacts.type == 'Mail').count()
     pourcentage_mail = "{:.2f}%".format((total_contacts_mail / total_contacts) * 100) if total_contacts > 0 else "0.00%"
-
     # Répétez le processus pour les autres types de contacts
     total_contacts_inconnu = query_contacts.filter(Contacts.type == 'Inconnu').count()
     pourcentage_inconnu = "{:.2f}%".format((total_contacts_inconnu / total_contacts) * 100) if total_contacts > 0 else "0.00%"
@@ -349,18 +374,26 @@ def get_updated_chart_data(query_entreprises, query_contacts):
 
     # Date de la dernière mise à jour
     derniere_date_mise_a_jour = query_entreprises.with_entities(func.max(Entreprises.date_mise_a_jour)).scalar()
-
+    
     # Évolution du nombre d'entreprises par jour
     entreprises_par_jour = query_entreprises.with_entities(
         func.date(Entreprises.date_mise_a_jour),
         func.count()
     ).group_by(func.date(Entreprises.date_mise_a_jour)).all()
 
-    dates = [(today - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(30)]
-    entreprises_data = [next((count for date, count in entreprises_par_jour if date == d), 0) for d in dates]
+    
+    # Utiliser un dictionnaire pour stocker les résultats de la requête SQL
+    entreprises_par_jour_dict = dict(entreprises_par_jour)
 
+    # Utiliser les mêmes dates formatées dans la liste dates
+    dates = [(today - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(30)]
+
+    # Construire la liste entreprises_data en utilisant le dictionnaire
+    entreprises_data = [entreprises_par_jour_dict.get(date, 0) for date in dates]
+    
     # Calcul de l'évolution quotidienne
     evolution_quotidienne = [0] + [entreprises_data[i] - entreprises_data[i - 1] for i in range(1, len(entreprises_data))]
+
 
     # Pourcentage d'entreprises par secteur
     entreprises_par_secteur = query_entreprises.with_entities(Entreprises.secteur_activite, func.count()).group_by(Entreprises.secteur_activite).all()
@@ -379,6 +412,7 @@ def get_updated_chart_data(query_entreprises, query_contacts):
     entreprises_par_departement_counts = [entreprise[1] for entreprise in entreprises_par_departement]
     pourcentage_par_departement = [(count / total_entreprises) * 100 for count in entreprises_par_departement_counts]
     
+ 
     # Tableau d'informations sur les entreprises
     tableau_informations_entreprises = {
         'Total Entreprises': total_entreprises,
@@ -534,16 +568,13 @@ def extraction_entreprise():
                 sort_by = request.args.get('sort_by', 'alphabet')
                 page = request.args.get('page', 1, type=int)
                 per_page = 10
-                
                 query_entreprises = build_base_query()
                 filters = get_filters_from_request()
                 query_entreprises, query_contacts = apply_filters(query_entreprises, Contacts.query, filters)
+                session['current_filters'] = filters
                 table_data = get_table_data(query_entreprises, query_contacts)
-                
                 paginated_data = paginate(table_data, page, per_page)
-               
                 total_pages = len(table_data['entreprises']) // per_page + (1 if len(table_data['entreprises']) % per_page != 0 else 0)
-               
                 unique_values = get_unique_values()
                 return render_template('dashboard/extraction_entreprise.html', user=user,**paginated_data, total_pages=total_pages, **unique_values, page=page)
             except Exception as e:
@@ -560,7 +591,7 @@ def export_excel():
     try:
         sort_by = request.args.get('sort_by', 'alphabet')
         query_entreprises = build_base_query()
-        filters = get_filters_from_request()
+        filters = session.get('current_filters', {})
         query_entreprises, query_contacts = apply_filters(query_entreprises, Contacts.query, filters)
         table_data = get_table_data(query_entreprises, query_contacts)
         # Créer un DataFrame
@@ -582,8 +613,7 @@ def export_excel():
 
     # Add this route to handle delete
 
-
-@app.route('/delete_entreprise/<int:entreprise_id>', methods=['POST'])
+@app.route('/delete_entreprise/<int:entreprise_id>', methods=['GET', 'POST', 'DELETE'])
 def delete_entreprise(entreprise_id):
     try:
         # Fetch the entreprise based on the provided ID
@@ -600,8 +630,10 @@ def delete_entreprise(entreprise_id):
 
 ####  Edit
 
+from sqlalchemy.exc import SQLAlchemyError
 
 
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from sqlalchemy.exc import SQLAlchemyError
 
 @app.route('/edit_entreprise/<int:entreprise_id>', methods=['GET', 'POST'])
@@ -610,27 +642,118 @@ def edit_entreprise(entreprise_id):
         user = users.query.get(session['user_id'])
         if user:
             try:
-                # Assurez-vous que l'entreprise appartient à l'utilisateur actuel
+                # Make sure the entreprise belongs to the current user
                 entreprise = Entreprises.query.filter_by(entreprise_id=entreprise_id).first_or_404()
 
                 if request.method == 'POST':
-                    # Mise à jour de toutes les informations de l'entreprise basée sur les données du formulaire
+                    # Update all entreprise information based on the form data
                     entreprise.nom = request.form['nom']
                     entreprise.secteur_activite = request.form['secteur_activite']
                     entreprise.site_web = request.form['site_web']
-                    entreprise.chiffre_affaires = request.form['chiffre_affaires']
-                    # Mettez à jour d'autres champs si nécessaire
+                    entreprise.chiffre_affaires = float(request.form['chiffre_affaires'])  # Convert to float if necessary
+                    entreprise.numero_identification = request.form['numero_identification']
+                    entreprise.adresse = request.form['adresse']
+                    entreprise.localite = request.form['localite']
+                    entreprise.ville = request.form['ville']
+                    entreprise.arrondissement = request.form['arrondissement']
+                    entreprise.commune = request.form['commune']
+                    entreprise.departement = request.form['departement']
+                    entreprise.pays = request.form['pays']
+                    entreprise.code_postal = request.form['code_postal']
+                    entreprise.opt_in = bool(request.form.get('opt_in'))
+                    entreprise.status_sms = bool(request.form.get('status_sms'))
+                    entreprise.status_appel = bool(request.form.get('status_appel'))
+                    entreprise.status_mail = bool(request.form.get('status_mail'))
+
+                    # Update or add contacts associated with the entreprise
+                    contacts = request.form.getlist('contacts')
+                    for contact in contacts:
+                        contact_id = int(contact.get('contact_id', 0))
+                        if contact_id:
+                            # Update existing contact
+                            existing_contact = Contacts.query.get(contact_id)
+                            existing_contact.type = contact['type']
+                            existing_contact.valeur = contact['valeur']
+                            existing_contact.sources = contact['sources']
+                            existing_contact.status = bool(contact.get('status'))
+                        else:
+                            # Add new contact
+                            new_contact = Contacts(
+                                entreprise=entreprise,
+                                type=contact['type'],
+                                valeur=contact['valeur'],
+                                sources=contact['sources'],
+                                status=bool(contact.get('status'))
+                            )
+                            db.session.add(new_contact)
+
                     db.session.commit()
 
                     flash('Entreprise mise à jour avec succès!', 'success')
                     return redirect(url_for('extraction_entreprise'))
 
-                # Rendre le formulaire de modification
+                # Render the edit entreprise form
                 return render_template('dashboard/edit_entreprise.html', user=user, entreprise=entreprise)
             except SQLAlchemyError as e:
                 return render_template('erreur.html', error=str(e))
     return redirect(url_for('login'))
 
+
+
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from sqlalchemy.exc import SQLAlchemyError
+
+
+@app.route('/add_entreprise', methods=['GET', 'POST'])
+def add_entreprise():
+    if 'user_id' in session:
+        user = users.query.get(session['user_id'])
+        if user:
+            try:
+                if request.method == 'POST':
+                    # Create a new instance of Entreprises
+                    nouvelle_entreprise = Entreprises(
+                        nom=request.form['nom'],
+                        secteur_activite=request.form['secteur_activite'],
+                        site_web=request.form['site_web'],
+                        chiffre_affaires=float(request.form['chiffre_affaires']),
+                        numero_identification=request.form['numero_identification'],
+                        adresse=request.form['adresse'],
+                        localite=request.form['localite'],
+                        ville=request.form['ville'],
+                        arrondissement=request.form['arrondissement'],
+                        commune=request.form['commune'],
+                        departement=request.form['departement'],
+                        pays=request.form['pays'],
+                        code_postal=request.form['code_postal'],
+                        opt_in=bool(request.form.get('opt_in')),
+                        status_sms=bool(request.form.get('status_sms')),
+                        status_appel=bool(request.form.get('status_appel')),
+                        status_mail=bool(request.form.get('status_mail'))
+                    )
+
+                    # Create contacts associated with the entreprise
+                    contacts = request.form.getlist('contacts')  # Assuming you have a list of contacts in your form
+                    for contact in contacts:
+                        new_contact = Contacts(
+                            entreprise=nouvelle_entreprise,
+                            type=contact['type'],  # Replace with the actual field names from your form
+                            valeur=contact['valeur'],
+                            sources=contact['sources'],
+                            status=bool(contact.get('status'))
+                        )
+                        db.session.add(new_contact)
+
+                    db.session.add(nouvelle_entreprise)
+                    db.session.commit()
+
+                    flash('Nouvelle entreprise ajoutée avec succès!', 'success')
+                    return redirect(url_for('extraction_entreprise'))
+
+                return render_template('dashboard/add_entreprise.html', user=user)
+            except SQLAlchemyError as e:
+                return render_template('erreur.html', error=str(e))
+    return redirect(url_for('login'))
 
 
 @app.route('/particular_graph')

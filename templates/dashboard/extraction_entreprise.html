@@ -1,6 +1,7 @@
 {% extends "base/base.html" %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/extra.css') }}">
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <div class="row filterGroup">
@@ -79,7 +80,7 @@
 
     <div class="formHeader row">
         <h3 class="text-1 fl"><div class="fr">
-            <a href="{{ url_for('export_excel') }}" class="btnSave bg-1 text-fff text-bold fr">NOUVEAU</a>
+            <a href="{{ url_for('add_entreprise') }}" class="btnSave bg-1 text-fff text-bold fr">NOUVEAU</a>
            </div></h3>
         <div class="fr">
             <a href="{{ url_for('export_excel') }}" class="btnSave bg-1 text-fff text-bold fr">ENREGISTRER</a>
@@ -94,18 +95,20 @@
     
         <article>
             <h2>Total Contacts</h2>
-            <p>{{ total_entreprises }}</p>
+            <p>
+                Total Mail: {{ total_contacts_mail }} ({{ pourcentage_mail }})<br>
+                Total Fixe: {{ total_contacts_fixe }} ({{ pourcentage_fixe }})<br>
+                Total Mobile: {{ total_contacts_mobile }} ({{ pourcentage_mobile }})
+            </p>
         </article>
     
         <article>
             <h2>Total Sites Web</h2>
-            <p>{{ total_sites_web }}</p>
+            <p>{{ total_sites_web }} ({{ pourcentage_sites_web }})</p>
         </article>
     </section>
-
-
-
     
+
     <!-- Deuxième section avec le tableau d'informations -->
     <section>
         <h2>Informations sur les entreprises</h2>
@@ -138,9 +141,9 @@
                         <td>
                             <!-- Icône d'édition avec une action associée -->
                             <a href="{{ url_for('edit_entreprise', entreprise_id=entreprise['id']) }}"><i class="fas fa-edit"></i></a>
-                            
-                            <!-- Icône de suppression avec une action associée -->
-                            <a href="{{ url_for('delete_entreprise', entreprise_id=entreprise['id']) }}"><i class="fas fa-trash-alt"></i></a>
+                            <a href="#" onclick="confirmDelete('{{ url_for('delete_entreprise', entreprise_id=entreprise['id']) }}');">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
                         </td>
                         <!-- Ajoutez d'autres colonnes au besoin -->
                     </tr>
@@ -175,26 +178,32 @@
 </div>
 
 <script>
-    function deleteEntreprise(entrepriseId) {
-        // Confirmation éventuelle avec l'utilisateur
-        if (confirm("Êtes-vous sûr de vouloir supprimer cette entreprise ?")) {
-            // Requête AJAX DELETE
-            $.ajax({
-                url: '/delete_entreprise/' + entrepriseId,
-                type: 'POST',
-                success: function(result) {
-                    // Traitez la réponse ici
-                    console.log(result);
-                    // Actualisez ou mettez à jour la page si nécessaire
-                    location.reload();
-                },
-                error: function(error) {
-                    // Traitez les erreurs ici
-                    console.error('Erreur lors de la suppression :', error);
-                }
-            });
-        }
+    function confirmDelete(deleteUrl) {
+    if (confirm("Êtes-vous sûr de vouloir supprimer cet élément?")) {
+        // Si l'utilisateur confirme, effectuez la requête DELETE.
+        fetch(deleteUrl, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+                // Ajoutez des en-têtes supplémentaires si nécessaire
+            },
+            // Ajoutez un corps JSON vide si nécessaire
+            // body: JSON.stringify({})
+        }).then(response => {
+            // Gérez la réponse de la requête DELETE si nécessaire
+            if (response.ok) {
+                // Redirigez l'utilisateur ou effectuez d'autres actions après la suppression réussie
+                window.location.reload();  // Par exemple, rechargez la page
+            } else {
+                // Gérez les erreurs si la suppression échoue
+                console.error('Erreur lors de la suppression');
+            }
+        }).catch(error => {
+            // Gérez les erreurs de requête si nécessaire
+            console.error('Erreur de requête DELETE:', error);
+        });
     }
+}
 </script>
 
 {% endblock %}
